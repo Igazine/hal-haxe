@@ -1,0 +1,17 @@
+bin/
+obj/
+.haxelib/
+*.n
+*.exe
+*.js
+*.py
+*.php
+*.lua
+*.cpp
+*.h
+*.o
+*.obj
+.DS_Store
+.vscode/
+.idea/
+.haxe/
