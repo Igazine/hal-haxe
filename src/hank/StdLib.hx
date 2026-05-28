@@ -102,7 +102,11 @@ class StdLib {
                 Sys.exit(code);
                 VVoid;
             },
-            "elapsedTime" => (args, ctx) -> VNumber(haxe.Timer.stamp() * 1000)
+            "elapsedTime" => (args, ctx) -> VNumber(haxe.Timer.stamp() * 1000),
+            "signal" => (args, ctx) -> {
+                if (args.length > 0) Sys.println('[SIGNAL] ' + valToString(args[0]));
+                VVoid;
+            }
         ]);
 
         mods.set("env", [
