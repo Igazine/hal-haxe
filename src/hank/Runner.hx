@@ -32,6 +32,16 @@ class Runner {
     }
 
     /**
+     * Registers a Hank Extension and all its modules.
+     */
+    final public function registerExtension(ext:IExtension) {
+        var mods = ext.getModules();
+        for (name => tasks in mods) {
+            registerModule(name, tasks);
+        }
+    }
+
+    /**
      * Pre-loads and caches a resource for execution.
      */
     final public function load(resource:Resource, ?stack:Array<String>):Expr {

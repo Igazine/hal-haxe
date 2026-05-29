@@ -167,7 +167,8 @@ class Interpreter implements ExecutionContext {
                 }
 
             case EFlowControl(condition, success, fallback, rescue, catchVar, _):
-                switch (evalInScope(condition, scope)) {
+                var condRes = evalInScope(condition, scope);
+                switch (condRes) {
                     case Value(condVal):
                         var res = if (isTruthy(condVal)) {
                             evalInScope(success, scope);
@@ -186,6 +187,10 @@ class Interpreter implements ExecutionContext {
                                 } else res;
                             default: res;
                         }
+                    case Error(err) if (rescue != null):
+                        var rescueScope = new HankScope(scope);
+                        if (catchVar != null) rescueScope.set(catchVar, VString(err.message));
+                        evalInScope(rescue, rescueScope);
                     case other: other;
                 }
         }
@@ -195,7 +200,13 @@ class Interpreter implements ExecutionContext {
         return switch (task) {
             case VTask(t):
                 if (t.isNative) {
-                    Value(t.native(args, this));
+                    return try {
+                        Value(t.native(args, this));
+                    } catch (e:HankErrorValue) {
+                        Error(e);
+                    } catch (e:Dynamic) {
+                        Error(HankErrorRegistry.create(GenericRuntimeError, [Std.string(e)]));
+                    }
                 } else {
                     if (args.length > t.params.length) {
                         return Error(HankErrorRegistry.create(TooManyArguments));

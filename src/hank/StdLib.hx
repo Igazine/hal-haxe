@@ -3,12 +3,16 @@ package hank;
 import hank.Types;
 import haxe.Json;
 
-class StdLib {
+class StdLib implements IExtension {
+    public var name(default, null):String = "StdLib";
+
+    public function new() {}
+
     /**
      * Returns the recommended standard library modules.
      * Developers should register these manually on their Runner.
      */
-    public static function getModules():Map<String, Map<String, Array<Value>->ExecutionContext->Value>> {
+    public function getModules():Map<String, Map<String, Array<Value>->ExecutionContext->Value>> {
         var valToString = (v:Value) -> ValueTools.toString(v);
 
         var mapAnyToHank:Dynamic->Value = null;
@@ -175,35 +179,6 @@ class StdLib {
                     n = Std.int(n / base);
                 }
                 VString((isNeg ? "-" : "") + res);
-            },
-            "bitAnd" => (args, ctx) -> {
-                var a = 0; switch (args[0]) { case VNumber(n): a = Std.int(n); default: }
-                var b = 0; switch (args[1]) { case VNumber(n): b = Std.int(n); default: }
-                VNumber(a & b);
-            },
-            "bitOr" => (args, ctx) -> {
-                var a = 0; switch (args[0]) { case VNumber(n): a = Std.int(n); default: }
-                var b = 0; switch (args[1]) { case VNumber(n): b = Std.int(n); default: }
-                VNumber(a | b);
-            },
-            "bitXor" => (args, ctx) -> {
-                var a = 0; switch (args[0]) { case VNumber(n): a = Std.int(n); default: }
-                var b = 0; switch (args[1]) { case VNumber(n): b = Std.int(n); default: }
-                VNumber(a ^ b);
-            },
-            "bitNot" => (args, ctx) -> {
-                var a = 0; switch (args[0]) { case VNumber(n): a = Std.int(n); default: }
-                VNumber(~a);
-            },
-            "shiftL" => (args, ctx) -> {
-                var a = 0; switch (args[0]) { case VNumber(n): a = Std.int(n); default: }
-                var b = 0; switch (args[1]) { case VNumber(n): b = Std.int(n); default: }
-                VNumber(a << b);
-            },
-            "shiftR" => (args, ctx) -> {
-                var a = 0; switch (args[0]) { case VNumber(n): a = Std.int(n); default: }
-                var b = 0; switch (args[1]) { case VNumber(n): b = Std.int(n); default: }
-                VNumber(a >> b);
             }
         ]);
 

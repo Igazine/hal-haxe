@@ -132,19 +132,24 @@ enum abstract HankError(Int) to Int from Int {
     var TooManyArguments = 4002;
     var MissingRequiredParameter = 4003;
     var Halt = 4004;
-    var GenericRuntimeError = 4005;
-}
+    var BitwiseOutOfBounds = 4005;
+    var GenericRuntimeError = 4006;
+    }
 
-typedef HankErrorValue = {
-    var code:HankError;
-    var message:String;
-}
+    class HankErrorValue {
+        public var code:HankError;
+        public var message:String;
+        public function new(code:HankError, message:String) {
+            this.code = code;
+            this.message = message;
+        }
+    }
 
-class HankErrorRegistry {
+    class HankErrorRegistry {
     public static var messages:Map<HankError, String> = [
         UnexpectedCharacter => "Unexpected character: {0}",
         UnclosedStringLiteral => "Unclosed string literal",
-        
+
         EmptyScript => "Syntax Error: Script is empty.",
         ExpectedMainTask => "Syntax Error: Expected main task definition (a closure or a block).",
         UnexpectedCodeOutsideMainTask => "Syntax Error: Unexpected code outside of main task. A Hank script must contain exactly one Task definition.",
@@ -152,16 +157,17 @@ class HankErrorRegistry {
         UnexpectedToken => "Unexpected token: {0} ({1})",
         MacroRequiresString => "Syntax Error: The '@' macro strictly requires a string literal path (e.g., @ \"utils\"). Identifier shorthand is not allowed.",
         ExpectedIdentifier => "Expected identifier, found {0}",
-        
+
         CircularDependency => "Circular Dependency: {0}",
         ResourceContentNotLoaded => "Resource content not loaded: {0}",
         ScriptMustBeTask => "Hank Error: Script must evaluate to a Task definition.",
         MacroResourceNotFound => "Macro resource not found: @{0}",
-        
+
         TargetNotFunction => "Target is not a function: {0}",
         TooManyArguments => "Too many arguments",
         MissingRequiredParameter => "Missing required parameter: {0}",
         Halt => "HANK_HALT:{0}",
+        BitwiseOutOfBounds => "Value exceeds safe integer bounds for bitwise operation: {0}",
         GenericRuntimeError => "{0}"
     ];
 
@@ -179,6 +185,6 @@ class HankErrorRegistry {
             tmpl = 'ERROR: $tmpl in $fileName at\n\t$line:\t$lineText';
         }
 
-        return { code: code, message: tmpl };
+        return new HankErrorValue(code, tmpl);
     }
 }
