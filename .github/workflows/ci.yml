@@ -1,0 +1,15 @@
+name: CI
+on: [push, pull_request]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: k0kubun/setup-haxe@v1
+        with:
+          haxe-version: 4.3.7
+      - run: haxelib dev hank .
+      - run: haxe -cp src -cp examples/demo/src -main Main -neko bin/Main.n
+      - run: neko bin/Main.n
