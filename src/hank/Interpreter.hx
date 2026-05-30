@@ -147,12 +147,12 @@ class Interpreter implements ExecutionContext {
                     case other: return other;
                 }
 
-            case EField(objExpr, fieldName, _):
-                var oRes = evalInScope(objExpr, scope);
+            case EField(collExpr, fieldName, _):
+                var oRes = evalInScope(collExpr, scope);
                 switch (oRes) {
                     case Value(v):
                         switch (v) {
-                            case VObject(map):
+                            case VMap(map):
                                 return Value(map.exists(fieldName) ? map.get(fieldName) : VVoid);
                             case VArray(vec) if (fieldName == "length"):
                                 return Value(VNumber(vec.length));
@@ -163,7 +163,7 @@ class Interpreter implements ExecutionContext {
                     case other: return other;
                 }
 
-            case EObject(fields, _):
+            case EMap(fields, _):
                 var map = new Map<String, Value>();
                 for (k => vExpr in fields) {
                     var res = evalInScope(vExpr, scope);
@@ -172,7 +172,7 @@ class Interpreter implements ExecutionContext {
                         case other: return other;
                     }
                 }
-                Value(VObject(map));
+                Value(VMap(map));
 
             case EArray(items, _):
                 var vec = [];

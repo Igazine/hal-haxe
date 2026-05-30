@@ -5,7 +5,7 @@ enum ValueType {
     TypeNumber;
     TypeString;
     TypeArray;
-    TypeObject;
+    TypeMap;
     TypeOpaque;
     TypeTask;
     TypeError;
@@ -16,7 +16,7 @@ enum Value {
     VNumber(v:Float);
     VString(v:String);
     VArray(v:Array<Value>);
-    VObject(v:Map<String, Value>);
+    VMap(v:Map<String, Value>);
     VOpaque(label:String, data:Dynamic);
     VTask(v:TaskValue);
     VError(code:Int, args:Array<Value>);
@@ -61,11 +61,11 @@ enum Expr {
     EAssign(name:String, value:Expr, td:TokenData);
     ELiteral(value:Value, td:TokenData);
     EIdent(name:String, isCore:Bool, td:TokenData);
-    EField(object:Expr, fieldName:String, td:TokenData);
+    EField(collection:Expr, fieldName:String, td:TokenData);
     EFuncDef(params:Array<Param>, body:Expr, td:TokenData);
     EFuncCall(target:Expr, args:Array<Expr>, td:TokenData);
     EUnOp(op:String, target:Expr, td:TokenData);
-    EObject(fields:Map<String, Expr>, td:TokenData);
+    EMap(fields:Map<String, Expr>, td:TokenData);
     EArray(items:Array<Expr>, td:TokenData);
     EFlowControl(condition:Expr, success:Expr, ?fallback:Expr, ?rescue:Expr, ?catchVar:String, td:TokenData);
     EError(code:Int, args:Array<Expr>, td:TokenData);
@@ -82,7 +82,7 @@ class ValueTools {
             case VNumber(_): TypeNumber;
             case VString(_): TypeString;
             case VArray(_): TypeArray;
-            case VObject(_): TypeObject;
+            case VMap(_): TypeMap;
             case VOpaque(_, _): TypeOpaque;
             case VTask(_): TypeTask;
             case VError(_, _): TypeError;
@@ -95,7 +95,7 @@ class ValueTools {
             case TypeNumber: "Number";
             case TypeString: "String";
             case TypeArray: "Array";
-            case TypeObject: "Object";
+            case TypeMap: "Map";
             case TypeOpaque: "Opaque";
             case TypeTask: "Task";
             case TypeError: "Error";
@@ -111,7 +111,7 @@ class ValueTools {
                 s;
             case VString(s): s;
             case VArray(_): "[Array]";
-            case VObject(_): "{Object}";
+            case VMap(_): "[Map]";
             case VOpaque(label, _): '[Opaque:$label]';
             case VTask(_): "[Task]";
             case VError(code, _): '[Error:$code]';
@@ -122,7 +122,7 @@ class ValueTools {
 class ExprTools {
     public static function getTd(e:Expr):TokenData {
         return switch (e) {
-            case EBlock(_, td) | EAssign(_, _, td) | ELiteral(_, td) | EIdent(_, _, td) | EField(_, _, td) | EFuncDef(_, _, td) | EFuncCall(_, _, td) | EUnOp(_, _, td) | EObject(_, td) | EArray(_, td) | EFlowControl(_, _, _, _, _, td) | EError(_, _, td): td;
+            case EBlock(_, td) | EAssign(_, _, td) | ELiteral(_, td) | EIdent(_, _, td) | EField(_, _, td) | EFuncDef(_, _, td) | EFuncCall(_, _, td) | EUnOp(_, _, td) | EMap(_, td) | EArray(_, td) | EFlowControl(_, _, _, _, _, td) | EError(_, _, td): td;
         }
     }
 }

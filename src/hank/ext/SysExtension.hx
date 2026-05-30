@@ -52,7 +52,7 @@ class SysExtension implements IExtension {
                 map.set("total", VNumber(0));
                 map.set("free", VNumber(0));
                 map.set("used", VNumber(0));
-                return VObject(map);
+                return VMap(map);
             },
             "cpu" => (args, ctx) -> VNumber(0.0)
         ]);
@@ -139,7 +139,7 @@ class SysExtension implements IExtension {
                     map.set("size", VNumber(s.size));
                     map.set("isDir", sys.FileSystem.isDirectory(path) ? VNumber(1.0) : VVoid);
                     map.set("mtime", VNumber(s.mtime.getTime()));
-                    return VObject(map);
+                    return VMap(map);
                 } catch (e:Dynamic) return VVoid;
             }
         ]);
@@ -168,7 +168,7 @@ class SysExtension implements IExtension {
                     map.set("code", VNumber(code));
                     map.set("stdout", VString(stdout));
                     map.set("stderr", VString(stderr));
-                    return VObject(map);
+                    return VMap(map);
                 } catch (e:Dynamic) return VVoid;
             }
         ]);

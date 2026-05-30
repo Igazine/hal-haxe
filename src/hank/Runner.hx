@@ -38,7 +38,7 @@ class Runner {
                 native: func
             }));
         }
-        coreScope.set(name, VObject(moduleObj));
+        coreScope.set(name, VMap(moduleObj));
     }
 
     /**

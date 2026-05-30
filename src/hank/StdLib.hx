@@ -31,7 +31,7 @@ class StdLib implements IExtension {
                 for (f in Reflect.fields(v)) {
                     map.set(f, mapAnyToHank(Reflect.field(v, f)));
                 }
-                return VObject(map);
+                return VMap(map);
             }
             return VVoid;
         };
@@ -42,7 +42,7 @@ class StdLib implements IExtension {
                 case VNumber(n): n;
                 case VString(s): s;
                 case VArray(a): a.map(mapHankToAny);
-                case VObject(m):
+                case VMap(m):
                     var obj = {};
                     for (k => val in m) {
                         var any = mapHankToAny(val);
@@ -62,7 +62,7 @@ class StdLib implements IExtension {
                     var found = false;
                     for (i in a) if (checkOpaque(i)) { found = true; break; }
                     found;
-                case VObject(m):
+                case VMap(m):
                     var found = false;
                     for (_ => val in m) if (checkOpaque(val)) { found = true; break; }
                     found;
@@ -80,7 +80,7 @@ class StdLib implements IExtension {
                     if (a1.length != a2.length) return false;
                     for (i in 0...a1.length) if (!hankEquals(a1[i], a2[i])) return false;
                     true;
-                case [VObject(o1), VObject(o2)]:
+                case [VMap(o1), VMap(o2)]:
                     var k1 = [for (k in o1.keys()) k];
                     var k2 = [for (k in o2.keys()) k];
                     if (k1.length != k2.length) return false;
@@ -380,11 +380,11 @@ class StdLib implements IExtension {
             }
         ]);
 
-        mods.set("obj", [
+        mods.set("map", [
             "get" => (args, ctx) -> {
                 if (args.length < 2) return VVoid;
                 return switch (args[0]) {
-                    case VObject(m):
+                    case VMap(m):
                         var key = valToString(args[1]);
                         if (m.exists(key)) m.get(key) else VVoid;
                     default: VVoid;
@@ -393,15 +393,15 @@ class StdLib implements IExtension {
             "set" => (args, ctx) -> {
                 if (args.length < 3) return VVoid;
                 return switch (args[0]) {
-                    case VObject(m):
+                    case VMap(m):
                         var key = valToString(args[1]);
                         m.set(key, args[2]);
                         VVoid;
-                    case other: VError(4007, [VString("Object"), VString(ValueTools.typeToString(ValueTools.getType(other))), VString("obj.set")]);
+                    case other: VError(4007, [VString("Map"), VString(ValueTools.typeToString(ValueTools.getType(other))), VString("map.set")]);
                 }
             },
             "keys" => (args, ctx) -> switch (args[0]) {
-                case VObject(m):
+                case VMap(m):
                     var keys = [];
                     for (k in m.keys()) keys.push(VString(k));
                     VArray(keys);

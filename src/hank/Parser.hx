@@ -135,12 +135,8 @@ class Parser {
                     e;
                 }
             case LBrace: 
-                if (isObjectLiteral()) {
-                    parseObjectLiteral();
-                } else {
-                    parseBlock();
-                }
-            case LBracket: parseArrayLiteral();
+                parseBlock();
+            case LBracket: parseCollectionLiteral();
             case Not:
                 pos++;
                 EUnOp("!", parsePrimary(), tdRoot);
@@ -235,48 +231,72 @@ class Parser {
         return EBlock(stmts, tdRoot);
     }
 
-    function isObjectLiteral():Bool {
-        var p = pos + 1;
-        while (p < tokens.length && tokens[p].type == Newline) p++;
-        if (p >= tokens.length) return false;
-        if (tokens[p].type == RBrace) return true;
-        if (tokens[p].type == Identifier) {
-            var next = p + 1;
-            while (next < tokens.length && tokens[next].type == Newline) next++;
-            return next < tokens.length && tokens[next].type == Colon;
-        }
-        return false;
-    }
-
-    function parseObjectLiteral():Expr {
-        var t = consume(LBrace);
-        var tdRoot = { line: t.line, lineText: t.lineText };
-        var fields:Map<String, Expr> = new Map();
-        while (peek().type != RBrace && !isEof()) {
-            skipNewlines();
-            if (peek().type == RBrace) break;
-            var key = consumeIdentifier();
-            consume(Colon);
-            var val = parseExpression();
-            fields.set(key, val);
-            if (peek().type == Comma) consume(Comma);
-        }
-        consume(RBrace);
-        return EObject(fields, tdRoot);
-    }
-
-    function parseArrayLiteral():Expr {
+    function parseCollectionLiteral():Expr {
         var t = consume(LBracket);
         var tdRoot = { line: t.line, lineText: t.lineText };
-        var items:Array<Expr> = [];
-        while (peek().type != RBracket && !isEof()) {
-            skipNewlines();
-            if (peek().type == RBracket) break;
-            items.push(parseExpression());
-            if (peek().type == Comma) consume(Comma);
+        skipNewlines();
+
+        // 1. Handle [:]
+        if (peek().type == Colon) {
+            consume(Colon);
+            consume(RBracket);
+            return EMap(new Map(), tdRoot);
         }
-        consume(RBracket);
-        return EArray(items, tdRoot);
+
+        // 2. Handle []
+        if (peek().type == RBracket) {
+            consume(RBracket);
+            return EArray([], tdRoot);
+        }
+
+        // 3. Parse first element
+        var first = parseExpression();
+        skipNewlines();
+
+        if (peek().type == Colon) {
+            // This is a Map
+            consume(Colon);
+            var val = parseExpression();
+            var fields = new Map<String, Expr>();
+            fields.set(getStaticKey(first), val);
+
+            while (true) {
+                skipNewlines();
+                if (peek().type == Comma) {
+                    consume(Comma);
+                    skipNewlines();
+                    if (peek().type == RBracket) break;
+                    var keyExpr = parseExpression();
+                    consume(Colon);
+                    var valExpr = parseExpression();
+                    fields.set(getStaticKey(keyExpr), valExpr);
+                } else break;
+            }
+            consume(RBracket);
+            return EMap(fields, tdRoot);
+        } else {
+            // This is an Array
+            var items = [first];
+            while (true) {
+                skipNewlines();
+                if (peek().type == Comma) {
+                    consume(Comma);
+                    skipNewlines();
+                    if (peek().type == RBracket) break;
+                    items.push(parseExpression());
+                } else break;
+            }
+            consume(RBracket);
+            return EArray(items, tdRoot);
+        }
+    }
+
+    function getStaticKey(e:Expr):String {
+        return switch (e) {
+            case ELiteral(VString(s), _): s;
+            case EIdent(name, false, _): name;
+            default: throw error(ExpectedIdentifier, [peek().type]); // Technically it should be a more specific error
+        }
     }
 
     function parseArgList():Array<Expr> {
