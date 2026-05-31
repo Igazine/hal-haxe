@@ -51,6 +51,14 @@ class Main {
         try {
             var res = runner.run(resource, hankArgs);
             switch (res) {
+                case VError(code, args):
+                    var loc = runner.localization;
+                    var tmpl = loc.exists(code) ? loc.get(code) : "Unknown Error";
+                    for (i in 0...args.length) {
+                        tmpl = StringTools.replace(tmpl, '{' + i + '}', ValueTools.toString(args[i]));
+                    }
+                    Sys.stderr().writeString('Error $code: $tmpl\n');
+                    Sys.exit(1);
                 case VNumber(n): Sys.exit(Std.int(n));
                 default: Sys.exit(0);
             }
@@ -118,7 +126,17 @@ class Main {
                 args.push(VString("Tamas"));
             }
             try {
-                runner.run(resource, args);
+                var res = runner.run(resource, args);
+                switch (res) {
+                    case VError(code, errArgs):
+                        var loc = runner.localization;
+                        var tmpl = loc.exists(code) ? loc.get(code) : "Unknown Error";
+                        for (i in 0...errArgs.length) {
+                            tmpl = StringTools.replace(tmpl, '{' + i + '}', ValueTools.toString(errArgs[i]));
+                        }
+                        Sys.stderr().writeString('Error $code: $tmpl\n');
+                    default:
+                }
             } catch (e:Dynamic) {
                 handleError(e);
             }

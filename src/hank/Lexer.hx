@@ -15,7 +15,6 @@ enum TokenType {
     Hash;      // #
     Not;       // !
     Caret;     // ^
-    Dot;       // .
     Comma;     // ,
     
     LParen;    // (
@@ -34,6 +33,7 @@ typedef Token = {
     var type:TokenType;
     var literal:String;
     var line:Int;
+    var column:Int;
     var lineText:String;
 }
 
@@ -98,7 +98,6 @@ class Lexer {
                 case '#': addToken(Hash, "#");
                 case '!': addToken(Not, "!");
                 case '^': addToken(Caret, "^");
-                case '.': addToken(Dot, ".");
                 case ',': addToken(Comma, ",");
                 case '(': addToken(LParen, "(");
                 case ')': addToken(RParen, ")");
@@ -115,11 +114,13 @@ class Lexer {
         return tokens;
     }
 
-    function addToken(type:TokenType, literal:String) {
+    function addToken(type:TokenType, literal:String, posOffset:Int = 0) {
+        var column = (pos - posOffset) - lineStart + 1;
         tokens.push({
             type: type,
             literal: literal,
             line: line,
+            column: column,
             lineText: getCurrentLineText()
         });
     }
@@ -133,10 +134,32 @@ class Lexer {
     function readNumber() {
         var start = pos;
         if (input.charAt(pos) == "-") pos++;
-        while (pos < input.length && (isDigit(input.charAt(pos)) || input.charAt(pos) == ".")) {
+        
+        var hasDot = false;
+        while (pos < input.length) {
+            var char = input.charAt(pos);
+            if (char == ".") {
+                if (hasDot) break;
+                hasDot = true;
+            } else if (!isDigit(char)) {
+                break;
+            }
             pos++;
         }
-        addToken(Number, input.substring(start, pos));
+
+        // Roll back if ends with dot
+        if (input.charAt(pos - 1) == ".") {
+            pos--;
+        }
+
+        // Check for illegal suffix
+        if (pos < input.length && (isAlpha(input.charAt(pos)) || input.charAt(pos) == "_")) {
+            var char = input.charAt(pos);
+            addToken(Error, HankErrorRegistry.create(UnexpectedCharacter, [char]).message, pos - start);
+            return;
+        }
+
+        addToken(Number, input.substring(start, pos), pos - start);
     }
 
     function readIdentifier() {
@@ -145,10 +168,11 @@ class Lexer {
         while (pos < input.length && (isAlphaNumeric(input.charAt(pos)) || input.charAt(pos) == "_")) {
             pos++;
         }
-        addToken(Identifier, input.substring(start, pos));
+        addToken(Identifier, input.substring(start, pos), pos - start);
     }
 
     function readString(quote:String) {
+        var start = pos;
         pos++; // skip quote
         var val = "";
         while (pos < input.length && input.charAt(pos) != quote) {
@@ -165,11 +189,11 @@ class Lexer {
             pos++;
         }
         if (pos >= input.length) {
-            addToken(Error, HankErrorRegistry.create(UnclosedStringLiteral).message);
+            addToken(Error, HankErrorRegistry.create(UnclosedStringLiteral).message, pos - start);
             return;
         }
         pos++; // skip quote
-        addToken(String, val);
+        addToken(String, val, pos - start);
     }
 
     function getCurrentLineText():String {

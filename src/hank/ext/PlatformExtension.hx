@@ -24,114 +24,123 @@ class PlatformExtension implements IExtension {
         return VNumber(f);
     }
 
-    public function getModules():Map<String, Map<String, Array<Value>->ExecutionContext->Value>> {
-        var mods = new Map<String, Map<String, Array<Value>->ExecutionContext->Value>>();
+    public function getTasks():Map<String, Array<Value>->ExecutionContext->Value> {
+        var tasks = new Map<String, Array<Value>->ExecutionContext->Value>();
 
-        mods.set("bin", [
-            "and" => (args, ctx) -> {
-                var a:Float = 0;
-                var b:Float = 0;
-                switch (args[0]) {
-                    case VNumber(n): a = n;
-                    case other: return VError(4007, [VString("Number"), VString(ValueTools.typeToString(ValueTools.getType(other))), VString("bin.and")]);
-                }
-                switch (args[1]) {
-                    case VNumber(n): b = n;
-                    case other: return VError(4007, [VString("Number"), VString(ValueTools.typeToString(ValueTools.getType(other))), VString("bin.and")]);
-                }
-
-                var err = checkSafeInt(a, "bin.and");
-                if (ctx.isError(err)) return err;
-                err = checkSafeInt(b, "bin.and");
-                if (ctx.isError(err)) return err;
-
-                return fromSafeInt(haxe.Int64.fromFloat(a) & haxe.Int64.fromFloat(b), "bin.and");
-            },
-            "or" => (args, ctx) -> {
-                var a:Float = 0;
-                var b:Float = 0;
-                switch (args[0]) {
-                    case VNumber(n): a = n;
-                    case other: return VError(4007, [VString("Number"), VString(ValueTools.typeToString(ValueTools.getType(other))), VString("bin.or")]);
-                }
-                switch (args[1]) {
-                    case VNumber(n): b = n;
-                    case other: return VError(4007, [VString("Number"), VString(ValueTools.typeToString(ValueTools.getType(other))), VString("bin.or")]);
-                }
-
-                var err = checkSafeInt(a, "bin.or");
-                if (ctx.isError(err)) return err;
-                err = checkSafeInt(b, "bin.or");
-                if (ctx.isError(err)) return err;
-
-                return fromSafeInt(haxe.Int64.fromFloat(a) | haxe.Int64.fromFloat(b), "bin.or");
-            },
-            "xor" => (args, ctx) -> {
-                var a:Float = 0;
-                var b:Float = 0;
-                switch (args[0]) {
-                    case VNumber(n): a = n;
-                    case other: return VError(4007, [VString("Number"), VString(ValueTools.typeToString(ValueTools.getType(other))), VString("bin.xor")]);
-                }
-                switch (args[1]) {
-                    case VNumber(n): b = n;
-                    case other: return VError(4007, [VString("Number"), VString(ValueTools.typeToString(ValueTools.getType(other))), VString("bin.xor")]);
-                }
-
-                var err = checkSafeInt(a, "bin.xor");
-                if (ctx.isError(err)) return err;
-                err = checkSafeInt(b, "bin.xor");
-                if (ctx.isError(err)) return err;
-
-                return fromSafeInt(haxe.Int64.fromFloat(a) ^ haxe.Int64.fromFloat(b), "bin.xor");
-            },
-            "not" => (args, ctx) -> {
-                var a:Float = 0;
-                switch (args[0]) {
-                    case VNumber(n): a = n;
-                    case other: return VError(4007, [VString("Number"), VString(ValueTools.typeToString(ValueTools.getType(other))), VString("bin.not")]);
-                }
-                var err = checkSafeInt(a, "bin.not");
-                if (ctx.isError(err)) return err;
-
-                return fromSafeInt(~haxe.Int64.fromFloat(a), "bin.not");
-            },
-            "shiftL" => (args, ctx) -> {
-                var a:Float = 0;
-                var b:Int = 0;
-                switch (args[0]) {
-                    case VNumber(n): a = n;
-                    case other: return VError(4007, [VString("Number"), VString(ValueTools.typeToString(ValueTools.getType(other))), VString("bin.shiftL")]);
-                }
-                switch (args[1]) {
-                    case VNumber(n): b = Std.int(n);
-                    case other: return VError(4007, [VString("Number"), VString(ValueTools.typeToString(ValueTools.getType(other))), VString("bin.shiftL")]);
-                }
-
-                var err = checkSafeInt(a, "bin.shiftL");
-                if (ctx.isError(err)) return err;
-
-                return fromSafeInt(haxe.Int64.fromFloat(a) << b, "bin.shiftL");
-            },
-            "shiftR" => (args, ctx) -> {
-                var a:Float = 0;
-                var b:Int = 0;
-                switch (args[0]) {
-                    case VNumber(n): a = n;
-                    case other: return VError(4007, [VString("Number"), VString(ValueTools.typeToString(ValueTools.getType(other))), VString("bin.shiftR")]);
-                }
-                switch (args[1]) {
-                    case VNumber(n): b = Std.int(n);
-                    case other: return VError(4007, [VString("Number"), VString(ValueTools.typeToString(ValueTools.getType(other))), VString("bin.shiftR")]);
-                }
-
-                var err = checkSafeInt(a, "bin.shiftR");
-                if (ctx.isError(err)) return err;
-
-                return fromSafeInt(haxe.Int64.fromFloat(a) >> b, "bin.shiftR");
+        tasks.set("bin_and", (args, ctx) -> {
+            var a:Float = 0;
+            var b:Float = 0;
+            if (args.length < 2) return VVoid;
+            switch (args[0]) {
+                case VNumber(n): a = n;
+                case other: return VError(4007, [VString("Number"), VString(ValueTools.typeToString(ValueTools.getType(other))), VString("bin_and")]);
             }
-        ]);
+            switch (args[1]) {
+                case VNumber(n): b = n;
+                case other: return VError(4007, [VString("Number"), VString(ValueTools.typeToString(ValueTools.getType(other))), VString("bin_and")]);
+            }
 
-        return mods;
+            var err = checkSafeInt(a, "bin_and");
+            if (ctx.isError(err)) return err;
+            err = checkSafeInt(b, "bin_and");
+            if (ctx.isError(err)) return err;
+
+            return fromSafeInt(haxe.Int64.fromFloat(a) & haxe.Int64.fromFloat(b), "bin_and");
+        });
+
+        tasks.set("bin_or", (args, ctx) -> {
+            var a:Float = 0;
+            var b:Float = 0;
+            if (args.length < 2) return VVoid;
+            switch (args[0]) {
+                case VNumber(n): a = n;
+                case other: return VError(4007, [VString("Number"), VString(ValueTools.typeToString(ValueTools.getType(other))), VString("bin_or")]);
+            }
+            switch (args[1]) {
+                case VNumber(n): b = n;
+                case other: return VError(4007, [VString("Number"), VString(ValueTools.typeToString(ValueTools.getType(other))), VString("bin_or")]);
+            }
+
+            var err = checkSafeInt(a, "bin_or");
+            if (ctx.isError(err)) return err;
+            err = checkSafeInt(b, "bin_or");
+            if (ctx.isError(err)) return err;
+
+            return fromSafeInt(haxe.Int64.fromFloat(a) | haxe.Int64.fromFloat(b), "bin_or");
+        });
+
+        tasks.set("bin_xor", (args, ctx) -> {
+            var a:Float = 0;
+            var b:Float = 0;
+            if (args.length < 2) return VVoid;
+            switch (args[0]) {
+                case VNumber(n): a = n;
+                case other: return VError(4007, [VString("Number"), VString(ValueTools.typeToString(ValueTools.getType(other))), VString("bin_xor")]);
+            }
+            switch (args[1]) {
+                case VNumber(n): b = n;
+                case other: return VError(4007, [VString("Number"), VString(ValueTools.typeToString(ValueTools.getType(other))), VString("bin_xor")]);
+            }
+
+            var err = checkSafeInt(a, "bin_xor");
+            if (ctx.isError(err)) return err;
+            err = checkSafeInt(b, "bin_xor");
+            if (ctx.isError(err)) return err;
+
+            return fromSafeInt(haxe.Int64.fromFloat(a) ^ haxe.Int64.fromFloat(b), "bin_xor");
+        });
+
+        tasks.set("bin_not", (args, ctx) -> {
+            var a:Float = 0;
+            if (args.length < 1) return VVoid;
+            switch (args[0]) {
+                case VNumber(n): a = n;
+                case other: return VError(4007, [VString("Number"), VString(ValueTools.typeToString(ValueTools.getType(other))), VString("bin_not")]);
+            }
+            var err = checkSafeInt(a, "bin_not");
+            if (ctx.isError(err)) return err;
+
+            return fromSafeInt(~haxe.Int64.fromFloat(a), "bin_not");
+        });
+
+        tasks.set("bin_shiftL", (args, ctx) -> {
+            var a:Float = 0;
+            var b:Int = 0;
+            if (args.length < 2) return VVoid;
+            switch (args[0]) {
+                case VNumber(n): a = n;
+                case other: return VError(4007, [VString("Number"), VString(ValueTools.typeToString(ValueTools.getType(other))), VString("bin_shiftL")]);
+            }
+            switch (args[1]) {
+                case VNumber(n): b = Std.int(n);
+                case other: return VError(4007, [VString("Number"), VString(ValueTools.typeToString(ValueTools.getType(other))), VString("bin_shiftL")]);
+            }
+
+            var err = checkSafeInt(a, "bin_shiftL");
+            if (ctx.isError(err)) return err;
+
+            return fromSafeInt(haxe.Int64.fromFloat(a) << b, "bin_shiftL");
+        });
+
+        tasks.set("bin_shiftR", (args, ctx) -> {
+            var a:Float = 0;
+            var b:Int = 0;
+            if (args.length < 2) return VVoid;
+            switch (args[0]) {
+                case VNumber(n): a = n;
+                case other: return VError(4007, [VString("Number"), VString(ValueTools.typeToString(ValueTools.getType(other))), VString("bin_shiftR")]);
+            }
+            switch (args[1]) {
+                case VNumber(n): b = Std.int(n);
+                case other: return VError(4007, [VString("Number"), VString(ValueTools.typeToString(ValueTools.getType(other))), VString("bin_shiftR")]);
+            }
+
+            var err = checkSafeInt(a, "bin_shiftR");
+            if (ctx.isError(err)) return err;
+
+            return fromSafeInt(haxe.Int64.fromFloat(a) >> b, "bin_shiftR");
+        });
+
+        return tasks;
     }
 }

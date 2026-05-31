@@ -53,6 +53,7 @@ interface Scope {
 
 typedef TokenData = {
     var line:Int;
+    var column:Int;
     var lineText:String;
 }
 
@@ -61,7 +62,6 @@ enum Expr {
     EAssign(name:String, value:Expr, td:TokenData);
     ELiteral(value:Value, td:TokenData);
     EIdent(name:String, isCore:Bool, td:TokenData);
-    EField(collection:Expr, fieldName:String, td:TokenData);
     EFuncDef(params:Array<Param>, body:Expr, td:TokenData);
     EFuncCall(target:Expr, args:Array<Expr>, td:TokenData);
     EUnOp(op:String, target:Expr, td:TokenData);
@@ -122,7 +122,7 @@ class ValueTools {
 class ExprTools {
     public static function getTd(e:Expr):TokenData {
         return switch (e) {
-            case EBlock(_, td) | EAssign(_, _, td) | ELiteral(_, td) | EIdent(_, _, td) | EField(_, _, td) | EFuncDef(_, _, td) | EFuncCall(_, _, td) | EUnOp(_, _, td) | EMap(_, td) | EArray(_, td) | EFlowControl(_, _, _, _, _, td) | EError(_, _, td): td;
+            case EBlock(_, td) | EAssign(_, _, td) | ELiteral(_, td) | EIdent(_, _, td) | EFuncDef(_, _, td) | EFuncCall(_, _, td) | EUnOp(_, _, td) | EMap(_, td) | EArray(_, td) | EFlowControl(_, _, _, _, _, td) | EError(_, _, td): td;
         }
     }
 }
@@ -160,9 +160,22 @@ enum abstract HankError(Int) to Int from Int {
 class HankErrorValue {
     public var code:HankError;
     public var message:String;
-    public function new(code:HankError, message:String) {
+    public var fileName:String;
+    public var line:Int;
+    public var column:Int;
+    public var lineText:String;
+
+    public function new(code:HankError, message:String, ?fileName:String, ?line:Int, ?column:Int, ?lineText:String) {
         this.code = code;
         this.message = message;
+        this.fileName = fileName;
+        this.line = line == null ? 0 : line;
+        this.column = column == null ? 0 : column;
+        this.lineText = lineText;
+    }
+
+    public function toString():String {
+        return message;
     }
 }
 
@@ -193,7 +206,7 @@ class HankErrorRegistry {
         GenericRuntimeError => "{0}"
     ];
 
-    public static function create(code:HankError, ?args:Array<Dynamic>, ?fileName:String, ?line:Int, ?lineText:String):HankErrorValue {
+    public static function create(code:HankError, ?args:Array<Dynamic>, ?fileName:String, ?line:Int, ?column:Int, ?lineText:String):HankErrorValue {
         var tmpl = messages.get(code);
         if (tmpl == null) tmpl = "Unknown Error";
 
@@ -203,10 +216,11 @@ class HankErrorRegistry {
             }
         }
 
+        var fullMessage = tmpl;
         if (fileName != null && line != null && lineText != null) {
-            tmpl = 'ERROR: $tmpl in $fileName at\n\t$line:\t$lineText';
+            fullMessage = 'ERROR: $tmpl in $fileName at\n\t$line:\t$lineText';
         }
 
-        return new HankErrorValue(code, tmpl);
+        return new HankErrorValue(code, fullMessage, fileName, line, column, lineText);
     }
 }

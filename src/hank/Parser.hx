@@ -61,7 +61,7 @@ class Parser {
 
     function parseFlowControl():Expr {
         var t = consume(Question);
-        var tdRoot = { line: t.line, lineText: t.lineText };
+        var tdRoot = { line: t.line, column: t.column, lineText: t.lineText };
         
         var condition:Expr;
         if (peek().type == LParen) {
@@ -127,7 +127,7 @@ class Parser {
 
     function parsePrimary():Expr {
         var t = peek();
-        var tdRoot = { line: t.line, lineText: t.lineText };
+        var tdRoot = { line: t.line, column: t.column, lineText: t.lineText };
         
         var expr:Expr = switch (t.type) {
             case At: parseInclude();
@@ -140,8 +140,6 @@ class Parser {
                     consume(RParen);
                     e;
                 }
-            case LBrace: 
-                parseBlock();
             case LBracket: parseCollectionLiteral();
             case Not:
                 pos++;
@@ -169,11 +167,8 @@ class Parser {
     function finishPrimary(expr:Expr):Expr {
         while (true) {
             var t = peek();
-            var tdRoot = { line: t.line, lineText: t.lineText };
-            if (t.type == Dot) {
-                consume(Dot);
-                expr = EField(expr, consumeIdentifier(), tdRoot);
-            } else if (t.type == LParen) {
+            var tdRoot = { line: t.line, column: t.column, lineText: t.lineText };
+            if (t.type == LParen) {
                 expr = EFuncCall(expr, parseArgList(), tdRoot);
             } else break;
         }
@@ -199,7 +194,7 @@ class Parser {
         if (peek().type != RParen) {
             params.push(parseParam());
             while (peek().type == Comma) {
-                consume(Comma);
+                this.consume(Comma);
                 params.push(parseParam());
             }
         }
@@ -226,7 +221,7 @@ class Parser {
 
     function parseBlock():Expr {
         var t = consume(LBrace);
-        var tdRoot = { line: t.line, lineText: t.lineText };
+        var tdRoot = { line: t.line, column: t.column, lineText: t.lineText };
         var stmts:Array<Expr> = [];
         while (peek().type != RBrace && !isEof()) {
             skipNewlines();
@@ -239,7 +234,7 @@ class Parser {
 
     function parseCollectionLiteral():Expr {
         var t = consume(LBracket);
-        var tdRoot = { line: t.line, lineText: t.lineText };
+        var tdRoot = { line: t.line, column: t.column, lineText: t.lineText };
         skipNewlines();
 
         // 1. Handle [:]
@@ -327,7 +322,7 @@ class Parser {
 
     function parseReturn():Expr {
         var t = consume(Caret);
-        var tdRoot = { line: t.line, lineText: t.lineText };
+        var tdRoot = { line: t.line, column: t.column, lineText: t.lineText };
         var val:Expr = ELiteral(VVoid, tdRoot);
         if (!isEof()) {
             var next = peek().type;
@@ -340,7 +335,7 @@ class Parser {
 
     function parseInclude():Expr {
         var t = consume(At);
-        var tdRoot = { line: t.line, lineText: t.lineText };
+        var tdRoot = { line: t.line, column: t.column, lineText: t.lineText };
         var rawPath = '';
         if (peek().type == String) {
             rawPath = consume(String).literal;
@@ -377,9 +372,9 @@ class Parser {
         return tokens[pos];
     }
 
-    function td():TokenData {
+    function td(): TokenData {
         var t = peek();
-        return { line: t.line, lineText: t.lineText };
+        return { line: t.line, column: t.column, lineText: t.lineText };
     }
 
     function skipNewlines() {
@@ -394,6 +389,6 @@ class Parser {
 
     function error(code:HankError, ?args:Array<Dynamic>):HankErrorValue {
         var t = peek();
-        return HankErrorRegistry.create(code, args, filename, t.line, t.lineText);
+        return HankErrorRegistry.create(code, args, filename, t.line, t.column, t.lineText);
     }
 }

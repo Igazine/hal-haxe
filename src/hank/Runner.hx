@@ -27,28 +27,23 @@ class Runner {
     }
 
     /**
-     * Registers a set of native tasks under a module name.
+     * Registers a map of native tasks.
      */
-    final public function registerModule(name:String, tasks:Map<String, (Array<Value>, ExecutionContext)->Value>) {
-        var moduleObj = new Map<String, Value>();
+    final public function registerTasks(tasks:Map<String, (Array<Value>, ExecutionContext)->Value>) {
         for (tName => func in tasks) {
-            moduleObj.set(tName, VTask({
+            coreScope.set(tName, VTask({
                 isNative: true,
-                name: '$name.$tName',
+                name: tName,
                 native: func
             }));
         }
-        coreScope.set(name, VMap(moduleObj));
     }
 
     /**
-     * Registers a Hank Extension and all its modules.
+     * Registers a Hank Extension and all its tasks.
      */
     final public function registerExtension(ext:IExtension) {
-        var mods = ext.getModules();
-        for (name => tasks in mods) {
-            registerModule(name, tasks);
-        }
+        registerTasks(ext.getTasks());
     }
 
     /**

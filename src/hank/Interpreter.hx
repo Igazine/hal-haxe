@@ -147,22 +147,6 @@ class Interpreter implements ExecutionContext {
                     case other: return other;
                 }
 
-            case EField(collExpr, fieldName, _):
-                var oRes = evalInScope(collExpr, scope);
-                switch (oRes) {
-                    case Value(v):
-                        switch (v) {
-                            case VMap(map):
-                                return Value(map.exists(fieldName) ? map.get(fieldName) : VVoid);
-                            case VArray(vec) if (fieldName == "length"):
-                                return Value(VNumber(vec.length));
-                            case VString(s) if (fieldName == "length"):
-                                return Value(VNumber(s.length));
-                            default: return Value(VVoid);
-                        }
-                    case other: return other;
-                }
-
             case EMap(fields, _):
                 var map = new Map<String, Value>();
                 for (k => vExpr in fields) {
