@@ -328,6 +328,7 @@ class StdLib implements IExtension {
             VVoid;
         });
         tasks.set("logic_eq", (args, ctx) -> (args.length < 2) ? VVoid : (hankEquals(args[0], args[1]) ? VNumber(1.0) : VVoid));
+        tasks.set("logic_isVoid", (args, ctx) -> (args.length > 0 && args[0] == VVoid) ? VNumber(1.0) : VVoid);
 
         // arr
         tasks.set("arr_length", (args, ctx) -> {
@@ -364,6 +365,67 @@ class StdLib implements IExtension {
                 case other: VError(4007, [VString("Array"), VString(ValueTools.typeToString(ValueTools.getType(other))), VString("arr_pop")]);
             }
         });
+        tasks.set("arr_shift", (args, ctx) -> {
+            if (args.length == 0) return VVoid;
+            return switch (args[0]) {
+                case VArray(a): if (a.length > 0) a.shift() else VVoid;
+                case other: VError(4007, [VString("Array"), VString(ValueTools.typeToString(ValueTools.getType(other))), VString("arr_shift")]);
+            }
+        });
+        tasks.set("arr_unshift", (args, ctx) -> {
+            if (args.length < 2) return VVoid;
+            return switch (args[0]) {
+                case VArray(a): a.unshift(args[1]); VVoid;
+                case other: VError(4007, [VString("Array"), VString(ValueTools.typeToString(ValueTools.getType(other))), VString("arr_unshift")]);
+            }
+        });
+        tasks.set("arr_slice", (args, ctx) -> {
+            if (args.length < 2) return VVoid;
+            return switch (args[0]) {
+                case VArray(a):
+                    var start = 0; switch (args[1]) { case VNumber(n): start = Std.int(n); default: return VError(4007, [VString("Number"), VString(ValueTools.typeToString(ValueTools.getType(args[1]))), VString("arr_slice")]); }
+                    var end = a.length; if (args.length > 2) switch (args[2]) { case VNumber(n): end = Std.int(n); default: return VError(4007, [VString("Number"), VString(ValueTools.typeToString(ValueTools.getType(args[2]))), VString("arr_slice")]); }
+                    VArray(a.slice(start, end));
+                case other: VError(4007, [VString("Array"), VString(ValueTools.typeToString(ValueTools.getType(other))), VString("arr_slice")]);
+            }
+        });
+        tasks.set("arr_sort", (args, ctx) -> {
+            if (args.length == 0) return VVoid;
+            return switch (args[0]) {
+                case VArray(a):
+                    if (args.length > 1) {
+                        var task = args[1];
+                        a.sort((x, y) -> {
+                            var res = ctx.call(task, [x, y]);
+                            switch (res) {
+                                case VNumber(n): return Std.int(n);
+                                default: return 0;
+                            }
+                        });
+                    } else {
+                        a.sort((x, y) -> {
+                            var sx = valToString(x);
+                            var sy = valToString(y);
+                            return sx == sy ? 0 : (sx < sy ? -1 : 1);
+                        });
+                    }
+                    VVoid;
+                case other: VError(4007, [VString("Array"), VString(ValueTools.typeToString(ValueTools.getType(other))), VString("arr_sort")]);
+            }
+        });
+        tasks.set("arr_indexof", (args, ctx) -> {
+            if (args.length < 2) return VVoid;
+            return switch (args[0]) {
+                case VArray(a):
+                    var target = args[1];
+                    var idx = -1;
+                    for (i in 0...a.length) {
+                        if (hankEquals(a[i], target)) { idx = i; break; }
+                    }
+                    if (idx == -1) VVoid else VNumber(idx);
+                case other: VError(4007, [VString("Array"), VString(ValueTools.typeToString(ValueTools.getType(other))), VString("arr_indexof")]);
+            }
+        });
         tasks.set("arr_each", (args, ctx) -> {
             if (args.length < 2) return VVoid;
             return switch (args[0]) {
@@ -385,6 +447,36 @@ class StdLib implements IExtension {
                 case other: VError(4007, [VString("Array"), VString(ValueTools.typeToString(ValueTools.getType(other))), VString("arr_each")]);
             }
         });
+        tasks.set("arr_map", (args, ctx) -> {
+            if (args.length < 2) return VVoid;
+            return switch (args[0]) {
+                case VArray(a):
+                    var task = args[1];
+                    var resArr = [];
+                    for (i in 0...a.length) {
+                        var res = ctx.call(task, [a[i], VNumber(i)]);
+                        if (ctx.isError(res)) return res;
+                        resArr.push(res);
+                    }
+                    VArray(resArr);
+                case other: VError(4007, [VString("Array"), VString(ValueTools.typeToString(ValueTools.getType(other))), VString("arr_map")]);
+            }
+        });
+        tasks.set("arr_filter", (args, ctx) -> {
+            if (args.length < 2) return VVoid;
+            return switch (args[0]) {
+                case VArray(a):
+                    var task = args[1];
+                    var resArr = [];
+                    for (i in 0...a.length) {
+                        var res = ctx.call(task, [a[i], VNumber(i)]);
+                        if (ctx.isError(res)) return res;
+                        if (res != VVoid) resArr.push(a[i]);
+                    }
+                    VArray(resArr);
+                case other: VError(4007, [VString("Array"), VString(ValueTools.typeToString(ValueTools.getType(other))), VString("arr_filter")]);
+            }
+        });
 
         // map
         tasks.set("map_get", (args, ctx) -> {
@@ -404,6 +496,18 @@ class StdLib implements IExtension {
                     m.set(key, args[2]);
                     VVoid;
                 case other: VError(4007, [VString("Map"), VString(ValueTools.typeToString(ValueTools.getType(other))), VString("map_set")]);
+            }
+        });
+        tasks.set("map_remove", (args, ctx) -> {
+            if (args.length < 2) return VVoid;
+            return switch (args[0]) {
+                case VMap(m):
+                    var key = valToString(args[1]);
+                    if (m.exists(key)) {
+                        m.remove(key);
+                        VNumber(1.0);
+                    } else VVoid;
+                case other: VError(4007, [VString("Map"), VString(ValueTools.typeToString(ValueTools.getType(other))), VString("map_remove")]);
             }
         });
         tasks.set("map_keys", (args, ctx) -> switch (args[0]) {

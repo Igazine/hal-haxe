@@ -12,14 +12,17 @@ enum EvalResult {
 class Interpreter implements ExecutionContext {
     public var globalScope:Scope;
     var coreScope:Scope;
+    var maxInstructions:Int;
+    var instructionCount:Int = 0;
 
     public var scope(get, never):Scope;
     function get_scope():Scope return globalScope;
 
-    public function new(?parentScope:Scope, coreScope:Scope, ?localization:Map<Int, String>) {
+    public function new(?parentScope:Scope, coreScope:Scope, ?localization:Map<Int, String>, ?maxInstructions:Int = 0) {
         this.coreScope = coreScope;
         this.globalScope = new HankScope(parentScope != null ? parentScope : coreScope);
         this.localization = localization != null ? localization : new Map();
+        this.maxInstructions = maxInstructions;
     }
 
     var localization:Map<Int, String>;
@@ -49,6 +52,14 @@ class Interpreter implements ExecutionContext {
     }
 
     function evalInScope(node:Expr, scope:Scope):EvalResult {
+        if (maxInstructions > 0) {
+            instructionCount++;
+            if (instructionCount > maxInstructions) {
+                var td = ExprTools.getTd(node);
+                return Error(VError(InstructionLimitExceeded, [VNumber(maxInstructions)]));
+            }
+        }
+
         return switch (node) {
             case ELiteral(v, _): Value(v);
             case EError(code, args, _):

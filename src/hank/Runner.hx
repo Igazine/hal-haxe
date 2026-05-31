@@ -5,6 +5,10 @@ import hank.Lexer;
 import hank.Parser;
 import hank.Types;
 
+typedef RunnerOptions = {
+    @:optional var maxInstructions:Int;
+}
+
 /**
  * A Hank Host Runner.
  * Handles resource orchestration, macro resolution, and AST caching.
@@ -14,8 +18,13 @@ class Runner {
     var resourceCache:Map<String, Resource> = new Map();
     public var coreScope:Scope = new HankScope();
     public var localization:Map<Int, String> = new Map();
+    public var options:RunnerOptions;
 
-    public function new() {}
+    public function new(?opts:RunnerOptions) {
+        if (opts == null) opts = { maxInstructions: 0 };
+        if (opts.maxInstructions == null) opts.maxInstructions = 0;
+        this.options = opts;
+    }
 
     /**
      * Registers a localization map (Code -> Template).
@@ -95,7 +104,7 @@ class Runner {
         if (args == null) args = [];
         var ast = load(resource);
 
-        var interpreter = new Interpreter(null, coreScope, localization);
+        var interpreter = new Interpreter(null, coreScope, localization, options.maxInstructions);
         var scriptTask = interpreter.run(ast);
 
         return switch (scriptTask) {

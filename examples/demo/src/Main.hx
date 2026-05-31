@@ -76,14 +76,15 @@ class Main {
         }
     }
 
-    static function createRunner():Runner {
-        var runner = new Runner();
+    static function createRunner(?opts:Runner.RunnerOptions):Runner {
+        var runner = new Runner(opts);
 
         // 0. Register Localization
         runner.registerLocalization([
             4001 => "Target is not a function: {0}",
             4007 => "Type Mismatch: Expected {0}, got {1} in {2}",
-            4005 => "Value exceeds safe integer bounds: {0} in {1}"
+            4005 => "Value exceeds safe integer bounds: {0} in {1}",
+            4008 => "Instruction Limit Exceeded: Script reached the maximum allowed AST evaluations ({0})"
         ]);
 
         // Register Extensions (Batteries included, but disconnected)
@@ -115,11 +116,17 @@ class Main {
             "test/conformance/18_runtime_module.hank",
             "test/conformance/19_error_handling.hank",
             "test/conformance/20_grammar_hardening.hank",
+            "test/conformance/21_data_functional.hank",
+            "test/conformance/22_instruction_limit.hank",
         ];
 
         for (t in tests) {
             Sys.println('--- Running Conformance: $t ---');
-            var runner = createRunner();
+            var opts:Runner.RunnerOptions = {};
+            if (t.indexOf("22_instruction_limit") != -1) {
+                opts.maxInstructions = 1000;
+            }
+            var runner = createRunner(opts);
             var path = Path.normalize(Path.join([workspaceRoot, t]));
             var resource = FileResource.create(path);
             var args:Array<Value> = [];

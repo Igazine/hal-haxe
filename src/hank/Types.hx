@@ -155,6 +155,7 @@ enum abstract HankError(Int) to Int from Int {
     var BitwiseOutOfBounds = 4005;
     var GenericRuntimeError = 4006;
     var TypeMismatch = 4007;
+    var InstructionLimitExceeded = 4008;
 }
 
 class HankErrorValue {
@@ -203,6 +204,7 @@ class HankErrorRegistry {
         Halt => "HANK_HALT:{0}",
         BitwiseOutOfBounds => "Value exceeds safe integer bounds for bitwise operation: {0}",
         TypeMismatch => "Type Mismatch: Expected {0}, got {1} in {2}",
+        InstructionLimitExceeded => "Instruction Limit Exceeded: Script reached the maximum allowed AST evaluations ({0})",
         GenericRuntimeError => "{0}"
     ];
 
